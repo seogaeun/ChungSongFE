@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, Text, ScrollView, TouchableOpacity } from "react-native";
+import React, { useState, useEffect, useRef,useCallback } from "react";
+import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from "react-native";
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
-import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 import { baseURL } from '../../../baseURL';
 import LoadingModal from "../../components/LoadingModal";
-
 import TopBar2 from '../../components/TopBar2';
 import ListBox from '../../components/listBox';
 import WriteButton from "../../components/writeButton";
@@ -14,17 +13,35 @@ export default function BulletinList() {
   const [bulletins, setBulletins] = useState([]);
   const navigation = useNavigation();
   const route = useRoute();
-  const scrollViewRef = useRef(null);
-  const [scrollPosition, setScrollPosition] = useState(0);
   const [bulletinName, setBulletinName] = useState("홍보게시판");
   const [nextPageUrl, setNextPageUrl] = useState(null);
   const [isFetchingData, setIsFetchingData] = useState(false);
   const [schoolBoardID, setSchoolBoardID] = useState('');
-  const [isLoading, setLoading] = useState(false);
-
+  const [isloading, setLoading] = useState(false);
   const [isManage, setIsManage] = useState('');
-  const [isInitialLoad, setIsInitialLoad] = useState(true); // 첫 로드 여부를 저장
+  const scrollViewRef = useRef(null); 
+  const scrollPosition = useRef(0); 
+  const [dataLoaded, setDataLoaded] = useState(false); 
+  const [refreshing, setRefreshing] = useState(false); 
 
+  useFocusEffect(
+    React.useCallback(() => {
+      const checkRefreshStatus = async () => {
+        const shouldRefresh = await AsyncStorage.getItem('shouldRefreshBulletinList');
+        console.log(shouldRefresh)
+        if (shouldRefresh === 'true') {
+          fetchData(); // 데이터 새로고침
+          await AsyncStorage.removeItem('shouldRefreshBulletinList'); // 상태 초기화
+        }
+      };
+
+      checkRefreshStatus();
+
+      return () => {
+        // Clean-up 작업 (필요 시)
+      };
+    }, [])
+  );
   useEffect(() => {
     const manageData = async () => {
       try {
@@ -39,17 +56,71 @@ export default function BulletinList() {
     manageData();
   }, []);
 
-  // 데이터 로딩 함수
-  const fetchData = async (restoreData = false) => {
-    if (isFetchingData) return;
+  const fetchUserInfo = async () => {
+    try {
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      const response = await fetch(`${baseURL}/users/user_info/`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      const data = await response.json();
+      setSchoolBoardID(data.school_board_id);
+      await AsyncStorage.setItem('userData', JSON.stringify(data));
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  useEffect(() => {
+    setBulletinName(route.params.bulletinName);
+    fetchUserInfo();
+  }, [])
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!dataLoaded) {
+        fetchUserInfo();
+        fetchData();
+      } else {
+        if (scrollViewRef.current) {
+          scrollViewRef.current.scrollTo({ y: scrollPosition.current, animated: false });
+        }
+      }
+
+      return () => {
+        if (scrollViewRef.current) {
+          scrollPosition.current = scrollPosition.current;
+        }
+      };
+    }, [dataLoaded])
+  );
+
+  useEffect(() => {
+    if (nextPageUrl && nextPageUrl !== 'null') {
+      fetchData();
+    }
+  }, [nextPageUrl]);
+
+
+
+
+  const fetchData = async (reset = false) => {
+    if (isFetchingData) {
+      return;
+    }
+
     setIsFetchingData(true);
 
     try {
       setLoading(true);
       const accessToken = await AsyncStorage.getItem('accessToken');
       let apiUrl = `${baseURL}${route.params?.path}`;
-
-      if (nextPageUrl && !restoreData) {
+      console.log("api url!!"+apiUrl)
+      if (!reset && nextPageUrl && nextPageUrl !== 'null') {
         apiUrl = nextPageUrl;
       }
 
@@ -63,95 +134,86 @@ export default function BulletinList() {
       const data = response.data.results;
       setNextPageUrl(response.data.links.next);
 
-      if (data.length > 0) {
-        setBulletins(prevBulletins => restoreData ? data : [...prevBulletins, ...data]);
+      if (reset) {
+        setBulletins(data); // 리셋 시 데이터를 초기화하고 새 데이터를 설정
+      } else {
+        setBulletins(prevBulletins => [...prevBulletins, ...data]);
       }
 
+      setDataLoaded(true);
       setLoading(false);
-
-      // 데이터를 불러온 후에 AsyncStorage에 저장
-      await AsyncStorage.setItem('bulletinData', JSON.stringify({ bulletins: [...bulletins, ...data], nextPageUrl }));
-
     } catch (error) {
       setLoading(false);
-      console.error("API 호출 중 에러 발생:", error);
+      console.error("API 호출 중 에러 발생!!:", error);
     } finally {
       setIsFetchingData(false);
+      setRefreshing(false); 
     }
   };
 
-  // 이전 상태를 AsyncStorage에서 불러오는 함수
-  const loadPreviousData = async () => {
-    try {
-      const savedData = await AsyncStorage.getItem('bulletinData');
-      const savedScrollPos = await AsyncStorage.getItem('scrollPosition');
-      if (savedData) {
-        const parsedData = JSON.parse(savedData);
-        setBulletins(parsedData.bulletins);
-        setNextPageUrl(parsedData.nextPageUrl);
-        if (savedScrollPos) {
-          setScrollPosition(Number(savedScrollPos));
-        }
-      } else {
-        // AsyncStorage에 데이터가 없을 경우 API를 통해 데이터 가져오기
-        await fetchData(true);
-      }
-    } catch (error) {
-      console.error("이전 데이터를 불러오지 못했습니다:", error);
-    } finally {
-      setIsInitialLoad(false); // 첫 로드 완료
-    }
+  // 새로고침 함수
+  const onRefresh = () => {
+    setRefreshing(true);
+    setNextPageUrl(null); 
+    fetchData(true); 
   };
 
+  
   useFocusEffect(
-    React.useCallback(() => {
-      if (isInitialLoad) {
-        loadPreviousData(); // 첫 로딩 때만 이전 데이터 불러오기
-      }
-
-      return () => {
-        if (scrollViewRef.current) {
-          AsyncStorage.setItem('scrollPosition', JSON.stringify(scrollPosition));
+    useCallback(() => {
+      const checkRefreshStatus = async () => {
+        const shouldRefresh = await AsyncStorage.getItem('shouldRefreshBulletinList');
+        console.log("shouldRefresh:", shouldRefresh); // 여기서 값을 확인
+        if (shouldRefresh === 'true') {
+          console.log("데이터 새로고침 시작");
+          onRefresh(); // 데이터를 새로고침
+          await AsyncStorage.removeItem('shouldRefreshBulletinList'); // 플래그 초기화
         }
       };
-    }, [isInitialLoad])
+  
+      checkRefreshStatus();
+  
+      // 화면이 포커스 해제되었을 때의 정리 작업(필요 시)
+      return () => {
+        // 여기에 정리 코드 추가 가능 (필요 없으면 비워도 됨)
+      };
+    }, []) // useCallback을 사용해서 메모이제이션
   );
+  
 
+  // 스크롤 이벤트 핸들러
   const handleScroll = (event) => {
     if (event.nativeEvent) {
       const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-      setScrollPosition(contentOffset.y);
+      scrollPosition.current = contentOffset.y; 
 
-      const paddingToBottom = 50;
-      if (layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom || contentSize.height === layoutMeasurement.height) {
-        if (nextPageUrl) {
+      const paddingToBottom = 20; // 스크롤이 바닥에 얼마나 가까워질 때 더 많은 데이터를 불러올지 결정
+      if (layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom) {
+        // 데이터가 이미 로딩 중이 아니고, 다음 페이지 URL이 있는 경우에만 데이터 로드
+        if (!isFetchingData && nextPageUrl && nextPageUrl !== 'null') {
           fetchData();
         }
       }
     }
   };
 
-  const handleListBoxClick = (bulletinName, bulletin) => {
-    navigation.navigate('BulletinContent', { bulletinName, bulletin });
-  };
-
   return (
     <View style={styles.container}>
-      {isLoading && <LoadingModal />}
+      {isloading && (
+        <LoadingModal></LoadingModal>
+      )}      
       <TopBar2 BulletinName={bulletinName} />
-      <ScrollView 
-        ref={scrollViewRef} 
-        scrollEventThrottle={16} 
-        contentContainerStyle={styles.listArea} 
+      <ScrollView
+        ref={scrollViewRef}
+        scrollEventThrottle={16}
+        contentContainerStyle={styles.listArea}
         onScroll={handleScroll}
-        onLayout={() => {
-          if (scrollViewRef.current && scrollPosition) {
-            scrollViewRef.current.scrollTo({ y: scrollPosition, animated: false });
-          }
-        }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         {bulletins.map((bulletin, index) => (
-          <TouchableOpacity key={index} onPress={() => handleListBoxClick(bulletinName, bulletin)}>
+          <TouchableOpacity key={index}>
             <ListBox
               info={bulletin}
               post_id={bulletin.post_id}
@@ -167,6 +229,7 @@ export default function BulletinList() {
           </TouchableOpacity>
         ))}
       </ScrollView>
+
       {(bulletinName === "공지사항" && isManage === false) || bulletinName === "웅성웅성" ? null : <WriteButton board_id={bulletinName === "학교별 게시판" ? schoolBoardID : bulletins[0]?.board_id} />}
     </View>
   );

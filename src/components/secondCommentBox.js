@@ -180,7 +180,7 @@ export default function SecondCommentBox({ name, date, time, content, pressLike,
       console.log('신고 API 응답:', response.data);
 
       // 만약 정상적으로 처리되면 알림창 표시
-      if (response.data.message === '신고가 접수되었습니다.') {
+      if (response.data.message === '신고가 접수되었습니다. \n 검토까지는 최대 24시간이 소요됩니다.') {
         Alert.alert('정상적으로 접수가 완료되었습니다.');
         // isReportContent 값 초기화
         setIsReportContent('');
@@ -199,9 +199,23 @@ export default function SecondCommentBox({ name, date, time, content, pressLike,
 
 
   useEffect(() => {
-    // isReportContent 값이 변경되면 처리 함수 호출
     if (isReportContent !== '') {
-      handleReport();
+      // Alert를 통해 사용자에게 iOS 스타일 확인 창 띄우기
+      Alert.alert(
+        isReportContent, // 제목
+        "신고는 반대의견을 나타내는 기능이 아닙니다.\n신고 사유에 맞지 않는 신고를 했을 경우, 해당 신고는 처리되지 않습니다.", // 설명
+        [
+          {
+            text: "취소", // 취소 버튼
+            onPress: () => setIsReportContent(''), // 아무 동작 없이 종료
+            style: "cancel",
+          },
+          {
+            text: "확인", // 확인 버튼
+            onPress: () => handleReport(), // handleReport 실행
+          },
+        ]
+      );
     }
   }, [isReportContent]);
 

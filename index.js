@@ -117,7 +117,6 @@ const HomeStack = () => (
                 }
             }}
         />
-
         <Stack.Screen name="BulletinList" component={BulletinList}
             options={{
                 header: ({ navigation }) => <CustomHeader title="카테고리" navigation={navigation} />, cardStyle: {
@@ -125,8 +124,6 @@ const HomeStack = () => (
                 }
             }}
         />
-
-
         <Stack.Screen name="BulletinContent" component={BulletinContent} options={{
             header: ({ navigation }) => <CustomHeader title="게시글" navigation={navigation} />, cardStyle: {
                 backgroundColor: '#fff', // Set the screen background color
@@ -181,16 +178,12 @@ const BulletinStack = () => (
 
 //관리자페이지 화면
 const ManagePageStack = () => (
-
     <Stack.Navigator screenOptions={{ gestureDirection: 'horizontal' }} initialRouteName="MainManage" >
         <Stack.Screen name="MainManage" component={MainManage} options={{
             header: ({ navigation }) => <CustomHeader title="관리 페이지" navigation={navigation} />, cardStyle: {
                 backgroundColor: 'rgb(225,242,250)', // Set the screen background color
             }
         }} />
-        <Stack.Screen name="BulletinCategory" component={BulletinCategory} />
-        <Stack.Screen name="BulletinContent" component={BulletinContent} />
-        <Stack.Screen name="BulletinList" component={BulletinList} />
         <Stack.Screen name="Confirm" component={Confirm} />
         <Stack.Screen name="ConfirmList" component={ConfirmList} options={{
             header: ({ navigation }) => <CustomHeader title="사생 정보 및 인증 관리" navigation={navigation} />, cardStyle: {
@@ -422,17 +415,17 @@ function App() {
                 });
 
                 const data = await response.json();
-
+                console.log("[유저 정보] ")
                 // userData 값을 AsyncStorage에 저장
                 await AsyncStorage.setItem('userData', JSON.stringify(data));
 
                 //console.log('API Response:', data);
             } catch (error) {
-                console.error('Error fetching data:', error);
+                console.error('[유저 정보 에러] Error fetching data:', error);
             }
         };
 
-        if (isLoggedIn) {
+        if(isLoggedIn){
             fetchData();
         }
 
@@ -449,7 +442,7 @@ function App() {
                 setManager(status == '관리자');
                 console.log("메니저 상태", manager);
             } catch (error) {
-                console.error('로그인시 에러', error);
+                console.log('로그인시 에러', error);
                 setManager(false);
                 console.log("메니저 상태", manager);
 

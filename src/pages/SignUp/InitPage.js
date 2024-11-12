@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Image, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, Image, TouchableOpacity, Alert } from 'react-native';
 import { widthPercentage, heightPercentage, fontPercentage } from '../../utils/ResponsiveSize';
 import { colors } from '../../constants/colors';
 import { useNavigation } from '@react-navigation/native';
@@ -15,6 +15,25 @@ const InitPage = () => {
   const [password, setPassword] = useState('');
 
   const navigation = useNavigation();
+
+    // 회원가입 알림창 표시
+    const showSignupAlert = () => {
+      Alert.alert(
+        "회원가입 안내", // 제목
+        "회원가입은 남도학숙 재사생만 가능합니다.\n회원가입 과정에서 남도학숙 카드를 \n사진으로 등록해야 하며, \n이를 인증 과정에서 사용합니다.\n\n회원가입 후 관리자 확인에는 \n최대 24시간이 소요되며, \n관리자 승인이 완료되어야만 로그인이 가능합니다.", // 내용 수정
+        [
+          {
+            text: "취소", // 취소 버튼
+            onPress: () => console.log("회원가입 취소됨"), // 취소를 누르면 아무 동작 없이 종료
+            style: "cancel",
+          },
+          {
+            text: "확인", // 확인 버튼
+            onPress: () => goToSignup(), // 확인을 누르면 회원가입 페이지로 이동
+          },
+        ]
+      );
+    };
 
 
   const goToLogin = () => {
@@ -69,7 +88,7 @@ const InitPage = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={goToSignup}
+          onPress={showSignupAlert}
           style={{
             width: widthPercentage(158),
             height: heightPercentage(34),

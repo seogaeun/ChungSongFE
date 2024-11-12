@@ -210,17 +210,31 @@ export default function CreatePost() {
           path = ''; // 기본 경로
       }
 
+
+      // bulletinName이 '~대학교'로 끝나면 '/my_school_board/' 경로로 설정
+      if (bulletinName.endsWith('대학교')) {
+        path = '/boards/my_school_board/';
+      }
       console.log("이동" + path)
       console.log(bulletinName);
 
+
+      await AsyncStorage.setItem('shouldRefreshBulletinList', 'true');
+      console.log("shouldRefreshBulletinList 값 설정 완료");
+      // 값이 제대로 저장되었는지 확인
+      const storedValue = await AsyncStorage.getItem('shouldRefreshBulletinList');
+      console.log("저장된 값 확인:", storedValue);
+
+
       // 작성이 완료되면 게시글 목록 페이지로 이동
-      navigation.navigate('BulletinList', { bulletinName, path, updateTime });
+      navigation.navigate('BulletinList', { bulletinName, path });
       console.log(response.data);
       if (response.data.post_id !== null && response.data.post_id !== undefined) {
         // Alert 창 표시
         setLoading(false);
 
         Alert.alert('작성 완료', '게시글 작성이 완료되었습니다.');
+
 
       }
       else {
@@ -230,7 +244,7 @@ export default function CreatePost() {
         Alert.alert('작성 실패', response.data.message);
 
       }
-      
+
 
     } catch (error) {
       setLoading(false);
@@ -275,7 +289,7 @@ export default function CreatePost() {
         </View>
         <TextInput
           style={styles.content}
-          placeholder={"내용을 입력하세요."}
+          placeholder={"내용을 입력하세요. \n\n*게시글을 작성함으로서 이용 약관에 동의하며 \n 불쾌한 콘텐츠나 남용적인 행동은 허용되지 않음을 이해함에 동의하는 것으로 간주합니다. \n\n *부적절하거나 불쾌감을 줄 수 있는 게시글 경고 없이 삭제될 수 있습니다. 남용적인 사용자는 서비스 이용이 제한될 수 있음을 숙지했습니다."}
           multiline={true}
           onChangeText={(text) => setContent(text)}
         />

@@ -45,12 +45,25 @@ const MypageRemoveUser = () => {
       });
       console.log(response.data);
       // 응답 확인
-      Alert.alert(response.data.message);
+      console.log('오류 응답 데이터:', error.response.data);
+      setLoading(true);
+      await AsyncStorage.removeItem('accessToken');
+      await AsyncStorage.removeItem('userData');
+      await AsyncStorage.removeItem('refresh_token');
+      navigation.navigate('LoginPage');
+
+
+      // 2초 후에 setLoading(false) 호출
+      const timeout = setTimeout(() => {
+        setLoading(false);
+      }, 2000);
+
+      Alert.alert("회원 탈퇴가 완료되었습니다.", "이용해주셔서 감사합니다.");
 
       // 회원 탈퇴 성공 시 처리
 
     } catch (error) {
-      console.error('회원 탈퇴 요청 중 에러 발생:', error);
+      
       // 에러 처리 로직 추가
       // 에러 객체의 response 속성이 존재하는지 확인하고 출력합니다.
       if (error.response) {
@@ -58,8 +71,20 @@ const MypageRemoveUser = () => {
           Alert.alert("비밀번호 오류","비밀번호가 올바르지 않습니다.");
         }
         else {
-          Alert.alert("회원 탈퇴 중 오류가 발생했습니다");
-
+          setLoading(true);
+          await AsyncStorage.removeItem('accessToken');
+          await AsyncStorage.removeItem('userData');
+          await AsyncStorage.removeItem('refresh_token');
+          navigation.navigate('InitPage');
+    
+    
+          // 2초 후에 setLoading(false) 호출
+          const timeout = setTimeout(() => {
+            setLoading(false);
+          }, 2000);
+    
+          Alert.alert("회원 탈퇴가 완료되었습니다.", "이용해주셔서 감사합니다.");
+    
         }
         console.log(error.response.detail);
         console.log('에러 응답 데이터:', error.response.data);
@@ -77,7 +102,7 @@ const MypageRemoveUser = () => {
         await AsyncStorage.removeItem('refresh_token');
         const accessToken = await AsyncStorage.getItem('accessToken');
         console.log(accessToken);
-        navigation.navigate('MainHome');
+        navigation.navigate('InitPage');
 
 
         // 2초 후에 setLoading(false) 호출

@@ -184,29 +184,21 @@ const SignUpCheckPolicy = () => {
 
   const handleLogin = () => {
     navigation.navigate('SignUpPageStep1');
-
   };
 
-  const [isAgreed, setIsAgreed] = useState(false);
+  // 상태값 추가
+  const [isPrivacyAgreed, setIsPrivacyAgreed] = useState(false);  // 개인정보 처리방침 동의
+  const [isContentAgreed, setIsContentAgreed] = useState(false);  // 불쾌한 콘텐츠 및 남용 금지 동의
 
-  const handleAgreeToggle = () => {
-    setIsAgreed(!isAgreed);
-    console.log(isAgreed);
-  };
-
-  useEffect(() => {
-    console.log('Agreement status:', isAgreed);
-  }, [isAgreed]);
+  // 두 체크박스 모두 동의해야 버튼 활성화
+  const isAllAgreed = isPrivacyAgreed && isContentAgreed;
 
   return (
     <View>
-
       {/* 메인 화면단 */}
       <View style={{ height: heightPercentage(480), paddingLeft: widthPercentage(17) }}>
-
-        {/* 타이틀 뷰 (객체로 만들기) */}
+        {/* 타이틀 뷰 */}
         <TitleView step={"개인정보 처리 방침 조회"} title={"개인정보 처리 방침에 동의해주세요"} />
-
 
         {/* 객체간 여백 */}
         <Blank height={10} />
@@ -224,41 +216,39 @@ const SignUpCheckPolicy = () => {
           fontSize: 12,
           color: colors.fontGray,
           shadowColor: '#000',
-          shadowOffset: {
-            width: 1,
-            height: 2,
-          },
+          shadowOffset: { width: 1, height: 2 },
           shadowOpacity: 0.15,
           shadowRadius: 4,
           elevation: 2, // For Android
           overflow: 'scroll',
         }}>
-          {/* 여기에 개인정보 처리방침 내용추가 */}
+          {/* 개인정보 처리방침 내용 */}
           <Markdown style={{ margin: widthPercentage(20) }}>
             {privacyContent}
           </Markdown>
-
-
-
         </ScrollView>
-        <TouchableOpacity onPress={handleAgreeToggle} style={{ marginRight: widthPercentage(5) }}>
-        <View style={{flexDirection:'row'}}>
-        <Text>개인정보 처리 방침에 동의합니다(필수) </Text>
-      {isAgreed ? <Text>☑️</Text> : <Text>▢</Text>}
-      </View>
-    </TouchableOpacity>
 
- 
+        {/* 체크박스 1: 개인정보 처리방침 동의 */}
+        <TouchableOpacity onPress={() => setIsPrivacyAgreed(!isPrivacyAgreed)} style={{ marginRight: widthPercentage(5) }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text>저는 개인정보 처리방침에 동의합니다. (필수)</Text>
+            {isPrivacyAgreed ? <Text>☑️</Text> : <Text>▢</Text>}
+          </View>
+        </TouchableOpacity>
 
-
+        {/* 체크박스 2: 불쾌한 콘텐츠 및 남용 금지 동의 */}
+        <TouchableOpacity onPress={() => setIsContentAgreed(!isContentAgreed)} style={{ marginRight: widthPercentage(5), marginTop: heightPercentage(10) }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={{ width: '90%' }}>불쾌한 콘텐츠나 남용적인 행동은 금지 및 제제 가능성을 이해하고 동의합니다. (필수)</Text>
+            {isContentAgreed ? <Text>☑️</Text> : <Text>▢</Text>}
+          </View>
+        </TouchableOpacity>
 
         <Blank height={50} />
-
-
       </View>
-      <NxtBtn onPress={handleLogin} disabled={!isAgreed} title="모두 동의합니다" />
 
-
+      {/* 버튼: 두 체크박스 모두 동의해야 활성화 */}
+      <NxtBtn onPress={handleLogin} disabled={!isAllAgreed} title="모두 동의합니다" />
     </View>
   );
 };

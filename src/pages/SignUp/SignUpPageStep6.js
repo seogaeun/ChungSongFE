@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, Alert, Platform, ImageBackground } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { check, PERMISSIONS, request, RESULTS } from 'react-native-permissions';
-import { widthPercentage, heightPercentage } from '../../utils/ResponsiveSize';
+import { widthPercentage, heightPercentage,fontPercentage } from '../../utils/ResponsiveSize';
 import { colors } from '../../constants/colors';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -19,13 +19,13 @@ import NxtBtn from '../../components/LoginProcess/LoginNxtBtn';
 const SignUpPageStep6 = () => {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const navigation = useNavigation();
-  
+
   const handleLogin = async () => {
     let allData; // allData 변수를 더 넓은 스코프에서 선언
-  
+
     try {
       const storedData = await AsyncStorage.getItem('signUpData');
-  
+
       if (storedData !== null) {
         allData = JSON.parse(storedData);
         console.log('All Data:', allData);
@@ -41,12 +41,12 @@ const SignUpPageStep6 = () => {
       );
       return; // 에러 발생 시 함수 종료
     }
-  
+
     console.log('All Data2:', allData);
-  
+
     try {
       console.log('All Data3:', allData);
-  
+
       if (allData) {
         // 필요한 데이터 구성
         const formData = new FormData();
@@ -62,18 +62,18 @@ const SignUpPageStep6 = () => {
         formData.append('school', allData.school);
         formData.append('password', allData.password);
         formData.append('password_confirm', allData.password_confirm);
-  
+
         // API 호출
         const response = await axios.post(`${baseURL}/users/signup/`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
         });
-  
+
         // 서버 응답 확인
         console.log(response.data);
-  
-        navigation.navigate('SignUpResult');
+
+        navigation.replace('SignUpResult');
       } else {
         // allData가 없는 경우에 대한 처리
         console.error('로그인을 위한 데이터를 불러오는 데 실패했습니다.');
@@ -93,9 +93,9 @@ const SignUpPageStep6 = () => {
       );
     }
   };
-  
-  
-  
+
+
+
 
   // 값 쿠키 저장
   const saveSignInPage6Data = async (room_card) => {
@@ -169,6 +169,10 @@ const SignUpPageStep6 = () => {
         <View style={{ paddingLeft: widthPercentage(17) }}>
           {/* 타이틀 뷰 (객체로 만들기) */}
           <TitleView step={"06 | 사생 인증"} title={"호실 카드 사진을 업로드해주세요"} />
+          <Text style={{
+            fontSize: fontPercentage(10), color: colors.fontGray, fontWeight: 400, marginBottom: heightPercentage(11),
+          }}>올려 주신 남도학숙 카드 사진은 계정 승인 단계시, 남도학숙 사생 인증 확인용으로만 활용됩니다. </Text>
+
         </View>
 
         {/* 객체간 여백 */}

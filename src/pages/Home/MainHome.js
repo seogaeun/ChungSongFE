@@ -234,6 +234,10 @@ const MainHome = () => {
                         setHotPost(firstPost[0]);
                     } else {
                         console.log('[웅성웅성 게시판]API 응답에 데이터가 없습니다.');
+                        setHotPost({
+                            title: "🔥인기글을 작성해보세요!",
+                            content: "일정 좋아요 이상 글이 여기에 보여집니다."
+                        });
                     }
                 } else {
                     console.error('[웅성웅성 게시판]API 응답이 실패했습니다.', response.status);
@@ -479,7 +483,7 @@ const MainHome = () => {
         <ScrollView >
             {/* 상단 - 웅성웅성, 식단 */}
             <ScrollView horizontal={true} contentContainerStyle={{ flexDirection: 'row', marginStart: widthPercentage(10), paddingEnd: widthPercentage(40), marginTop: heightPercentage(17) }}>
-                <FolderBoxIcon onPress={() => handleBoxClick("웅성웅성")} color="green" fontColor={colors.green} category="웅성웅성" title={hotPost.title} subtitle={hotPost.content}></FolderBoxIcon>
+                <FolderBoxIcon onPress={() => handleBoxClick("웅성웅성")} color="green" fontColor={colors.green} category="웅성웅성"   title={hotPost ? hotPost.title : "인기 게시글을 작성해보세요!"} subtitle={hotPost ? hotPost.content : "일정 좋아요 이상 글이 여기에 보여집니다."}></FolderBoxIcon>
                 <View style={{ marginLeft: widthPercentage(10) }}></View>
                 <FolderBoxIcon color="blue" fontColor={colors.blue} category="식단" title={mealtitle} subtitle={subMealTitle} onPress={() => handleOpenPopup()} today={formattedDate}></FolderBoxIcon>
             </ScrollView>
@@ -511,7 +515,7 @@ const MainHome = () => {
                                 position: 'absolute',
                                 top: heightPercentage(6),
                                 maxWidth: widthPercentage(53), color: "#777777", fontSize: fontPercentage(11), fontWeight: 600
-                            }}>공지사항</Text>
+                            }}>학숙알림</Text>
                             <View style={{ position: 'absolute', top: heightPercentage(23), left: widthPercentage(3) }}>
                                 <Text numberOfLines={1} ellipsizeMode="tail" style={{ maxWidth: widthPercentage(200), color: colors.black, fontSize: fontPercentage(14), fontWeight: 600 }}>{PostData[0].title}</Text>
                                 <Text numberOfLines={1} ellipsizeMode="tail" style={{
@@ -522,18 +526,19 @@ const MainHome = () => {
                     </GrayFolderBoxWithText>
                 </TouchableOpacity>
                 <Blank height={20} />
-
                 {/* 중단부 - 사생 게시판 */}
                 <MainTitle title={"사생 게시판"} />
-                <Blank height={15} />
+                <Blank height={10} />
+                <SubPostInfo onPress={() => handleBoxClick("홍보 게시판")} backgroundColor='rgba(64, 162, 219, 0.10)' borderColor='#40A2DB' fontColor={colors.blue} postName="홍보 게시판" title={PostData[5]?.title || NanTitle} />
+                <Blank height={20} />
                 <PostInfo onPress={() => handleBoxClick("자유 게시판")} backgroundColor='rgba(104, 185, 1, 0.10)' borderColor='#68B901' fontColor={colors.green} category='자유 게시판' postName="썰 좀 풀어봐봐" title={PostData[1]?.title || NanTitle} subtitle={PostData[1]?.content || NanSubtitle} />
                 <PostInfo onPress={() => handleBoxClick("배달 게시판")} backgroundColor='rgba(64, 162, 219, 0.10)' borderColor='#40A2DB' fontColor={colors.blue} category="배달 게시판" postName="이거 같이 먹을 사람?" title={PostData[2]?.title || NanTitle} subtitle={PostData[2]?.content || NanSubtitle} />
                 <PostInfo onPress={() => handleBoxClick("학교별 게시판")} backgroundColor='rgba(104, 185, 1, 0.10)' borderColor='#68B901' fontColor={colors.green} category="학교별 게시판" postName="우리 같은 대학교 였어?" title={schoolBoard[0]?.title || NanTitle} subtitle={schoolBoard[0]?.content || NanSubtitle} />
                 <PostInfo onPress={() => handleBoxClick("건의 게시판")} backgroundColor='rgba(64, 162, 219, 0.10)' borderColor='#40A2DB' fontColor={colors.blue} category="건의 게시판" postName="학숙에 바란다" title={PostData[3]?.title || NanTitle} subtitle={PostData[3]?.content || NanSubtitle} />
                 <Blank height={10} />
-                <SubPostInfo onPress={() => handleBoxClick("분실 게시판")} backgroundColor='rgba(64, 162, 219, 0.10)' borderColor='#40A2DB' fontColor={colors.blue} postName="분실 게시판" title={PostData[4]?.title || NanTitle} />
-                <Blank height={5} />
-                <SubPostInfo onPress={() => handleBoxClick("홍보 게시판")} backgroundColor='rgba(104, 185, 1, 0.10)' borderColor='#68B901' fontColor={colors.green} postName="홍보 게시판" title={PostData[5]?.title || NanTitle} />
+                {/* <SubPostInfo onPress={() => handleBoxClick("분실 게시판")} backgroundColor='rgba(64, 162, 219, 0.10)' borderColor='#40A2DB' fontColor={colors.blue} postName="분실 게시판" title={PostData[4]?.title || NanTitle} /> */}
+                {/* <Blank height={5} /> */}
+                {/* <SubPostInfo onPress={() => handleBoxClick("홍보 게시판")} backgroundColor='rgba(104, 185, 1, 0.10)' borderColor='#68B901' fontColor={colors.green} postName="홍보 게시판" title={PostData[5]?.title || NanTitle} /> */}
             </View>
 
             {/* 하단부 - 장터게시판 */}

@@ -36,7 +36,8 @@ const MypageAsk = () => {
         <Blank height={15} />
         <MypageTitle title="문의하기" />
         <MypageInputBox values={"7th.chungsong@gmail.com"} editables={false} />
-
+        <Blank height={15} />
+        <MypageTitle title="위 이메일로 문의주세요:)" />
 
 
 

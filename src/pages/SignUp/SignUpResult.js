@@ -39,7 +39,8 @@ const SignUpResult = () => {
 
       <Blank height={10}/>
       <Text style={{padding:heightPercentage(10),fontSize:20,fontWeight:700,color:colors.green }}>사생 인증 대기 중...</Text>
-      <Text>사생 인증은 일주일 정도 소요됩니다.</Text>
+      <Text>로그인 및 접속은 사생 인증 완료 후 이용할 수 있습니다. </Text>
+      <Text>사생 인증은 최대 24시간 소요됩니다.</Text>
       </View>
       <Blank height={90}/>
 

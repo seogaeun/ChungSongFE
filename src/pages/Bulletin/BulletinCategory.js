@@ -163,7 +163,7 @@ export default function BulletinCategory() {
               </View>
               <View style={styles.boxRow}>
                 <Box Name={"건의 게시판"} SVG={<WithLocalSvg asset={ProposalSvg} style={styles.image}/>} onPress={() => handleBoxClick("건의 게시판")}/>
-                <Box Name={"분실 게시판"} SVG={<WithLocalSvg asset={LossSvg} style={styles.image}/>} onPress={() => handleBoxClick("분실 게시판")}/>
+                {/* <Box Name={"분실 게시판"} SVG={<WithLocalSvg asset={LossSvg} style={styles.image}/>} onPress={() => handleBoxClick("분실 게시판")}/> */}
                 <Box Name={"홍보 게시판"} SVG={<WithLocalSvg asset={PromoteSvg} style={styles.image}/>} onPress={() => handleBoxClick("홍보 게시판")}/>
               </View>
               <View style={styles.blank}></View>

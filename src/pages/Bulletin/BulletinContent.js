@@ -1,6 +1,6 @@
 //BulleinContent.js
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Keyboard, Text, ScrollView, Dimensions, Image, Alert,KeyboardAvoidingView } from "react-native";
+import { View, StyleSheet, Keyboard, Text, ScrollView, Dimensions, Image, Alert, KeyboardAvoidingView } from "react-native";
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { baseURL } from '../../../baseURL';
@@ -43,7 +43,7 @@ export default function BulletinContent({ route, navigation }) {
   // 대댓글 목록을 저장할 상태
   const [secondComment, setSecondComment] = useState('');
   // 좋아요 상태를 저장할 상태
-//  const [liked, setLiked] = useState(false);
+  //  const [liked, setLiked] = useState(false);
   // 댓글, 대댓글 상태를 저장할 상태
   const [isReplyMode, setIsReplyMode] = useState(false);
   // 모달 상태를 저장할 상태
@@ -70,8 +70,9 @@ export default function BulletinContent({ route, navigation }) {
 
   const commentReload = () => {
     fetchContentData();
-    fetchData();
     fetchComments();
+    fetchData();
+
     //console.log(contentInfo);
   }
 
@@ -139,9 +140,6 @@ export default function BulletinContent({ route, navigation }) {
   useEffect(() => {
     fetchContentData();
     fetchData();
-    if (board_id !== '1') {
-      fetchComments();
-    }
 
     //console.log(contentInfo);
   }, []);
@@ -176,7 +174,7 @@ export default function BulletinContent({ route, navigation }) {
 
       // 만약 정상적으로 처리되면 알림창 표시
       if (response.data.message === '신고가 접수되었습니다.') {
-        Alert.alert('정상적으로 접수가 완료되었습니다.');
+        Alert.alert('정상적으로 접수가 완료되었습니다. \n 검토까지는 최대 24시간이 소요됩니다. ');
         // isReportContent 값 초기화
         setIsReportContent('');
       } else {
@@ -196,15 +194,39 @@ export default function BulletinContent({ route, navigation }) {
 
 
 
+  // useEffect(() => {
+  //   // isReportContent 값이 변경되면 처리 함수 호출
+  //   if (isReportContent !== '') {
+  //     handleReport();
+  //   }
+  // }, [isReportContent]);
+
   useEffect(() => {
-    // isReportContent 값이 변경되면 처리 함수 호출
     if (isReportContent !== '') {
-      handleReport();
+      // Alert를 통해 사용자에게 iOS 스타일 확인 창 띄우기
+      Alert.alert(
+        isReportContent, // 제목
+        "신고는 반대의견을 나타내는 기능이 아닙니다.\n신고 사유에 맞지 않는 신고를 했을 경우, 해당 신고는 처리되지 않습니다.", // 설명
+        [
+          {
+            text: "취소", // 취소 버튼
+            onPress: () => setIsReportContent(''), // 아무 동작 없이 종료
+            style: "cancel",
+          },
+          {
+            text: "확인", // 확인 버튼
+            onPress: () => handleReport(), // handleReport 실행
+          },
+        ]
+      );
     }
   }, [isReportContent]);
 
+
+
   // 삭제하기 함수
   const handleDelete = async () => {
+
     try {
       // AsyncStorage에서 access_token 가져오기
       const accessToken = await AsyncStorage.getItem('accessToken');
@@ -224,9 +246,14 @@ export default function BulletinContent({ route, navigation }) {
 
       // 만약 삭제 성공이면 알림창 표시
       if (response.data.message === '게시글이 삭제되었습니다.') {
+        await AsyncStorage.setItem('shouldRefreshBulletinList', 'true');
+        console.log("shouldRefreshBulletinList 값 설정 완료");
+        // 값이 제대로 저장되었는지 확인
+        const storedValue = await AsyncStorage.getItem('shouldRefreshBulletinList');
+        console.log("저장된 값 확인:", storedValue);
+
         Alert.alert('게시글이 삭제되었습니다.');
         // 이전 화면으로 이동하는 코드 작성
-        console.log(navigation.getState())
         navigation.goBack();
       } else {
         // 삭제 실패 시에 대한 처리 코드 작성
@@ -251,11 +278,8 @@ export default function BulletinContent({ route, navigation }) {
     try {
       const accessToken = await AsyncStorage.getItem('accessToken');
       const userData = await AsyncStorage.getItem('userData');
-      //console.log("로그")
-      //console.log(userData);
       const { user_id } = JSON.parse(userData);
 
-      // 게시글 조회 API 호출
       const apiUrl = `${baseURL}/boards/${board_id}/posts/${post_id}/`;
       const response = await axios.get(apiUrl, {
         headers: {
@@ -264,26 +288,20 @@ export default function BulletinContent({ route, navigation }) {
         },
       });
 
-      // 응답 데이터 파싱
       const postData = response.data;
-      console.log("post", postData);
+
       setContentInfo(postData);
 
-      // 작성자의 user_id와 현재 로그인한 사용자의 user_id를 비교하여 버튼을 나타낼지 결정
       let showDeleteButton = postData.author_id === user_id;
-      if (showDeleteButton == false) {
+      if (!showDeleteButton) {
         showDeleteButton = user_id === '7e81bee9-40f3-41aa-a9e4-dc7d7296965b';
       }
-      //console.log("사용자 일치여부" + showDeleteButton);
       setIsDeleteMode(showDeleteButton);
 
-      // 여기에서 받아온 데이터(postData)를 사용하거나 처리하세요.
-      //console.log('게시글 데이터:', postData);
     } catch (error) {
       console.error('게시글 조회 중 에러 발생:', error);
       Alert.alert('게시글을 조회할 수 없습니다.');
       navigation.goBack();
-      // 에러 처리 로직 추가
     }
   };
 
@@ -291,7 +309,6 @@ export default function BulletinContent({ route, navigation }) {
     React.useCallback(() => {
       //console.log("재진입")
       fetchPostData();
-      fetchCommentData();
 
       return () => {
         // Clean-up 작업
@@ -301,31 +318,47 @@ export default function BulletinContent({ route, navigation }) {
 
   //Content 생성
   const fetchPostData = async () => {
-    //console.log(board_id);
-    //console.log(post_id);
     try {
-
-      // AsyncStorage에서 access_token 가져오기
       const accessToken = await AsyncStorage.getItem('accessToken');
-
-      // 게시글 조회 API 호출
-      const apiUrl = `${baseURL}/boards/${board_id}/posts/${postID}/`;
-      const response = await axios.get(apiUrl, {
+      const response = await axios.get(`${baseURL}/boards/${board_id}/posts/${postID}/`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
       });
 
-      // 응답 데이터 파싱
       const postData = response.data;
+
+      // "error" 키가 존재하는 경우
+      if (postData.error) {
+        Alert.alert(postData.error); // 알림창 표시
+        navigation.goBack(); // 이전 화면으로 돌아가기
+        return;
+      }
+
       setContentInfo(postData);
 
-      // 여기에서 받아온 데이터(postData)를 사용하거나 처리하세요.
-      //console.log('게시글 데이터:', postData);
+      const userData = await AsyncStorage.getItem('userData');
+      const { user_id } = JSON.parse(userData);
+
+      let showDeleteButton = postData.author_id === user_id;
+      if (!showDeleteButton) {
+        showDeleteButton = user_id === '7e81bee9-40f3-41aa-a9e4-dc7d7296965b';
+      }
+      setIsDeleteMode(showDeleteButton);
+
+      if (board_id !== '1') {
+        fetchComments();
+      }
+
+
+      // 댓글 데이터 조회
+      fetchCommentData(); // 댓글 데이터를 가져오는 함수 호출
+
     } catch (error) {
       console.error('게시글 조회 중 에러 발생:', error);
-      // 에러 처리 로직 추가
+      Alert.alert('게시글을 조회할 수 없습니다.');
+      navigation.goBack();
     }
   };
 
@@ -353,7 +386,6 @@ export default function BulletinContent({ route, navigation }) {
 
   useEffect(() => {
     fetchPostData();
-    fetchCommentData();
   }, []);
 
 
@@ -506,6 +538,26 @@ export default function BulletinContent({ route, navigation }) {
     setIsReportModalVisible(!isReportModalVisible);
   }
 
+  const dummyBlock = () => {
+    Alert.alert(
+      "차단하기", // 제목
+      "정말 작성자를 차단하시겠습니까?\n차단 이후에는 번복이 불가능하며, \n해당글 이후에 작성자가 작성한 글들은 보이지 않게 됩니다. ", // 내용 수정
+      [
+        {
+          text: "취소", // 취소 버튼
+          onPress: () => console.log("차단하기 취소됨"), // 취소를 누르면 아무 동작 없이 종료
+          style: "cancel",
+        },
+        {
+          text: "확인", // 확인 버튼
+          onPress: () => {        navigation.goBack();
+             Alert.alert("차단하기가 완료되었습니다. \n 해당글 이후에 작성자가 작성한 글들은 보이지 않게 됩니다.");}, // 확인을 누르면 회원가입 페이지로 이동
+        },
+      ]
+    );
+
+  }
+
   useEffect(() => {
     const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
       setIsReplyMode(false);
@@ -610,168 +662,187 @@ export default function BulletinContent({ route, navigation }) {
   };
 
 
+  const handleCommentSuccess = (success) => {
+    if (success) {
+      fetchComments(); // 댓글이 성공적으로 작성되면 fetchComments 호출
+    }
+  };
+
+
 
   return (
     <View style={styles.container}>
       {/* <TopBar BulletinName={bulletinName} /> */}
 
       <KeyboardAvoidingView
-  style={{ flex: 1 }}
-  behavior={Platform.OS === 'ios' ? 'padding' : null}
-  keyboardVerticalOffset={Platform.OS === 'ios' ? 150 : 0} // or whatever your offset is
->
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : null}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 150 : 0} // or whatever your offset is
+      >
 
 
-      <ScrollView >
+        <ScrollView >
 
-        <ReportModal
-          visible={isReportModalVisible}
-          onClose={() => setIsReportModalVisible(false)}
-          onReport={(option) => {
-            //console.log(option); // 선택된 옵션을 출력합니다.
-            setIsReportContent(option);
-            setIsReportModalVisible(false);
-          }}
-        />
+          <ReportModal
+            visible={isReportModalVisible}
+            onClose={() => setIsReportModalVisible(false)}
+            onReport={(option) => {
+              //console.log(option); // 선택된 옵션을 출력합니다.
+              setIsReportContent(option);
+              setIsReportModalVisible(false);
+            }}
+          />
 
-        <View style={[styles.contentArea, !contentInfo.display && { backgroundColor: '#ECECEC' }]}>
-          {/* 글 상단부 */}
-          <View style={styles.writer}>
-            {contentInfo ? (
-              contentInfo.anon_status ? (
-                isDeleteMode ? (
-                  <TouchableOpacity onPress={() => UserClick(contentInfo)}>
+          <View style={[styles.contentArea, !contentInfo.display && { backgroundColor: '#ECECEC' }]}>
+            {/* 글 상단부 */}
+            <View style={styles.writer}>
+              {contentInfo ? (
+                contentInfo.anon_status ? (
+                  isDeleteMode ? (
+                    <TouchableOpacity onPress={() => UserClick(contentInfo)}>
+                      <View style={styles.profileIcon}>
+                        <UserIcon index={10} />
+                      </View>
+                    </TouchableOpacity>
+                  ) : (
                     <View style={styles.profileIcon}>
                       <UserIcon index={10} />
                     </View>
-                  </TouchableOpacity>
-                ) : (
-                  <View style={styles.profileIcon}>
-                    <UserIcon index={10} />
-                  </View>
-                )
+                  )
 
-              ) : (
-                isDeleteMode ? (
-                  <TouchableOpacity onPress={() => UserClick(contentInfo)}>
+                ) : (
+                  isDeleteMode ? (
+                    <TouchableOpacity onPress={() => UserClick(contentInfo)}>
+                      <View style={styles.profileIcon}>
+                        <UserIcon index={contentInfo.author_profile} />
+                      </View>
+                    </TouchableOpacity>
+                  ) :
                     <View style={styles.profileIcon}>
                       <UserIcon index={contentInfo.author_profile} />
                     </View>
+                )
+              ) : (
+                <View style={styles.profileIcon}>
+                  <UserIcon index={10} />
+                </View>
+              )}
+              <View style={styles.profileBox}>
+                <Text style={styles.name}>{contentInfo.anon_status === true ? "익명" : contentInfo.author_name}</Text>
+                <View style={{ flexDirection: "row" }}>
+                  <Text style={styles.date}>{createdDate.getFullYear()} {(createdDate.getMonth() + 1).toString().padStart(2, '0')}/{createdDate.getDate().toString().padStart(2, '0')} {createdDate.getHours().toString().padStart(2, '0')}:{createdDate.getMinutes().toString().padStart(2, '0')}`</Text>
+                  <TouchableOpacity onPress={() => (isDeleteMode ? handleDeleteConfirmation() : handleModalChange())}>
+                    {isDeleteMode ? (
+                      <Text style={{ ...styles.date, color: "#68b901", paddingLeft: 10, onPress: { handleModalChange } }}>
+                        삭제하기
+                      </Text>
+                    ) : (
+                      board_id !== '1' && (
+                        <Text style={{ ...styles.date, paddingLeft: 10 }}>
+                          신고하기
+                        </Text>
+                      )
+                    )}
                   </TouchableOpacity>
-                ) :
-                  <View style={styles.profileIcon}>
-                    <UserIcon index={contentInfo.author_profile} />
-                  </View>
-              )
-            ) : (
-              <View style={styles.profileIcon}>
-                <UserIcon index={10} />
+                  <TouchableOpacity onPress={() => (isDeleteMode ? dummy() : dummyBlock())}>
+                    {isDeleteMode ? (
+                      <Text style={{ ...styles.date, color: "#68b901", paddingLeft: 10, onPress: { handleModalChange } }}>
+                      </Text>
+                    ) : (
+                      board_id !== '1' && (
+                        <Text style={{ ...styles.date, paddingLeft: 10 }}>
+                          차단하기
+                        </Text>
+                      )
+                    )}
+                  </TouchableOpacity>
+
+                </View>
+
+              </View>
+            </View>
+
+            {/* 글 메인 부분 */}
+            <View style={styles.titleBox}>
+              <Text style={styles.title}>{contentInfo.title}</Text>
+            </View>
+
+            <View style={styles.content}>
+              <Text style={styles.contentText}>
+                {contentInfo.content}
+              </Text>
+            </View>
+
+            {contentInfo.images && contentInfo.images.length > 0 && (
+              <View style={styles.scrollView}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {contentInfo.images.map((image, index) => (
+                    <SquareImage key={index} source={{ uri: image.imgfile }} onPress={() => console.log(`Pressed Image ${index + 1}`)} />
+                  ))}
+                </ScrollView>
               </View>
             )}
-            <View style={styles.profileBox}>
-              <Text style={styles.name}>{contentInfo.anon_status === true ? "익명" : contentInfo.author_name}</Text>
-              <View style={{ flexDirection: "row" }}>
-                <Text style={styles.date}>{createdDate.getFullYear()} {(createdDate.getMonth() + 1).toString().padStart(2, '0')}/{createdDate.getDate().toString().padStart(2, '0')} {createdDate.getHours().toString().padStart(2, '0')}:{createdDate.getMinutes().toString().padStart(2, '0')}`</Text>
-                <TouchableOpacity onPress={() => (isDeleteMode ? handleDeleteConfirmation() : handleModalChange())}>
-                  {isDeleteMode ? (
-                    <Text style={{ ...styles.date, color: "#68b901", paddingLeft: 10, onPress: { handleModalChange } }}>
-                      삭제하기
-                    </Text>
-                  ) : (
-                    board_id !== '1' && (
-                      <Text style={{ ...styles.date, paddingLeft: 10 }}>
-                        신고하기
-                      </Text>
-                    )
-                  )}
-                </TouchableOpacity>
 
-              </View>
+
+
+            {/* 하단 추천 파트 */}
+            <View style={styles.lowBox}>
+              <TouchableOpacity onPress={bulletinGoodIconClick}>
+                <WithLocalSvg asset={GoodSvg} />
+              </TouchableOpacity>
+              <Text style={{ ...styles.lowText, color: "#68b901" }}>{contentInfo.like_size}</Text>
+              {board_id !== '1' && <WithLocalSvg asset={CommentSvg} />}
+              {board_id !== '1' && <Text style={{ ...styles.lowText, color: "#40A2DB" }}>{contentInfo.comment_size}</Text>}
+
 
             </View>
           </View>
+          <View style={styles.line}></View>
+          {board_id !== 1 &&
+            <View style={styles.commentsArea}>
 
-          {/* 글 메인 부분 */}
-          <View style={styles.titleBox}>
-            <Text style={styles.title}>{contentInfo.title}</Text>
-          </View>
+              {/* Render existing comments */}
+              {comments.map((comment, index) => (
+                <CommentBox
+                  key={index}
+                  isDelete={!comment.display}
+                  onReplyModeChange={comment.up_comment_id !== null}
+                  board_id={board_id}
+                  post_id={postID}
+                  comment_id={comment.comment_id}
+                  name={comment.commenter}
+                  created_at={comment.created_at}
+                  content={comment.content}
+                  anon_status={comment.anon_status} // comment 익명 처리 아직 안 함
+                  like_size={comment.like_size}
+                  warn_size={comment.warn_size} // 얘도
+                  display={comment.display}  // 얘도
+                  pressLike={pressLike}
+                  writer_id={comment.writer_id}
+                  profileIcon={comment.anon_status ? 10 : comment.commenter_profile}
+                  reloadFunction={commentReload}
+                  onPress={handleButtonClick}
+                  secondComment={secondComment}
+                  textInputRef={textInputRef}
+                  changeReply={changeReply}
+                  onChange={handleModalChange}
+                  showBlock={showBlock}
+                  secondCommentAdd={secondCommentAdd}
+                  UserClick={commentUserClick}
+                  secondCmtUserClick={secondCmtUserClick}
+                />
+              ))}
 
-          <View style={styles.content}>
-            <Text style={styles.contentText}>
-              {contentInfo.content}
-            </Text>
-          </View>
-
-          {contentInfo.images && contentInfo.images.length > 0 && (
-            <View style={styles.scrollView}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {contentInfo.images.map((image, index) => (
-                  <SquareImage key={index} source={{ uri: image.imgfile }} onPress={() => console.log(`Pressed Image ${index + 1}`)} />
-                ))}
-              </ScrollView>
             </View>
-          )}
-
-
-
-          {/* 하단 추천 파트 */}
-          <View style={styles.lowBox}>
-            <TouchableOpacity onPress={bulletinGoodIconClick}>
-              <WithLocalSvg asset={GoodSvg} />
-            </TouchableOpacity>
-            <Text style={{ ...styles.lowText, color: "#68b901" }}>{contentInfo.like_size}</Text>
-            {board_id !== '1' && <WithLocalSvg asset={CommentSvg} />}
-            {board_id !== '1' && <Text style={{ ...styles.lowText, color: "#40A2DB" }}>{contentInfo.comment_size}</Text>}
-
-
-          </View>
-        </View>
-        <View style={styles.line}></View>
-        {board_id !== 1 &&
-          <View style={styles.commentsArea}>
-
-            {/* Render existing comments */}
-            {comments.map((comment, index) => (
-              <CommentBox
-                key={index}
-                isDelete={!comment.display}
-                onReplyModeChange={comment.up_comment_id !== null}
-                board_id={board_id}
-                post_id={postID}
-                comment_id={comment.comment_id}
-                name={comment.commenter}
-                created_at={comment.created_at}
-                content={comment.content}
-                anon_status={comment.anon_status} // comment 익명 처리 아직 안 함
-                like_size={comment.like_size}
-                warn_size={comment.warn_size} // 얘도
-                display={comment.display}  // 얘도
-                pressLike={pressLike}
-                writer_id={comment.writer_id}
-                profileIcon={comment.anon_status ? 10 : comment.commenter_profile}
-                reloadFunction={commentReload}
-                onPress={handleButtonClick}
-                secondComment={secondComment}
-                textInputRef={textInputRef}
-                changeReply={changeReply}
-                onChange={handleModalChange}
-                showBlock={showBlock}
-                secondCommentAdd={secondCommentAdd}
-                UserClick={commentUserClick}
-                secondCmtUserClick={secondCmtUserClick}
-              />
-            ))}
-
-          </View>
-        }
-      </ScrollView>
+          }
+        </ScrollView>
       </KeyboardAvoidingView>
 
 
       {/* Pass the handleCommentSubmit function to InputComment */}
       {!noInputState ?
 
-        <View style={[styles.footer, { bottom: heightPercentage(1.5) + keyboardOffset*0.75, }]}>
+        <View style={[styles.footer, { bottom: heightPercentage(1.5) + keyboardOffset * 0.75, }]}>
           {board_id !== '1' &&
             <InputComment
               onCommentSubmit={handleCommentSubmit}
@@ -783,12 +854,13 @@ export default function BulletinContent({ route, navigation }) {
               post_id={postID}
               reloadFunction={commentReload}
               upperId={upperId}
+              onSuccess={handleCommentSuccess} // 성공 처리 핸들러 전달
             />
           }
 
         </View>
         :
-        <View style={[styles.footer, { bottom: heightPercentage(1) + keyboardOffset*1.6, }]}>
+        <View style={[styles.footer, { bottom: heightPercentage(1) + keyboardOffset * 1.6, }]}>
           <DeleteButton onPress={handleDeleteButtonClick} />
         </View>
       }

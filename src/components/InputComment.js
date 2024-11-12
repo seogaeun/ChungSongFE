@@ -13,7 +13,7 @@ import { WithLocalSvg } from 'react-native-svg/css';
 
 import { heightPercentage, widthPercentage } from '../utils/ResponsiveSize';
 
-export default function InputComment({ board_id, post_id, anon_status, onCommentSubmit, textInputRef, isReplyMode, reloadFunction, upperId }) {
+export default function InputComment({ board_id, post_id, anon_status, onCommentSubmit, textInputRef, isReplyMode, reloadFunction, upperId,onSuccess }) {
   const [commentContent, setCommentContent] = useState("");
   const [isSelected, setIsSelected] = useState(false); // 1. isSelected 상태 정의
 
@@ -51,11 +51,13 @@ export default function InputComment({ board_id, post_id, anon_status, onComment
       console.log("response 메시지 " + response.data.message);
       if (response.data.comment_id !== undefined && response.data.comment_id !== null) {
         // Alert 창 표시
+        onSuccess(true); // 여기서 onSuccess 호출
         Alert.alert('작성 완료', '댓글 작성이 완료되었습니다.');
 
       }
       else {
         // Alert 창 표시
+        onSuccess(false); // 여기서 onSuccess 호출
         Alert.alert('작성 실패', response.data.message);
 
       }
@@ -108,11 +110,13 @@ export default function InputComment({ board_id, post_id, anon_status, onComment
       console.log(response.data.message);
       if (response.data.comment_id !== undefined && response.data.comment_id !== null) {
         // Alert 창 표시
+        onSuccess(true); // 여기서 onSuccess 호출
         Alert.alert('작성 완료', '댓글 작성이 완료되었습니다.');
 
       }
       else {
         // Alert 창 표시
+        onSuccess(false); // 여기서 onSuccess 호출
         Alert.alert('작성 실패', response.data.message);
 
       }
@@ -184,7 +188,6 @@ export default function InputComment({ board_id, post_id, anon_status, onComment
           </View>
         </TouchableOpacity>
       </View>
-
     </KeyboardAvoidingView>
   );
 }

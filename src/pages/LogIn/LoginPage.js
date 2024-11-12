@@ -59,7 +59,7 @@ const LoginPage = () => {
               Alert.alert('알림', '로그인에 실패했습니다. 다시 시도해주세요.');
             });
         } else if (response.data && response.data.message === "회원님은 현재 인증대기 상태입니다.") {
-          Alert.alert('알림', '회원님은 현재 인증대기 상태입니다. 인증을 완료해주세요.');
+          Alert.alert('관리자 계정 확인 대기 중', '회원님은 현재 인증대기 상태입니다\n 관리자 인증 완료 후 로그인이 가능합니다. \n 계정 인증은 최대 24시간이 소요됩니다');
         } else {
           console.log(response.data.message);
           Alert.alert('알림', '로그인에 실패했습니다. 이메일 또는 비밀번호를 확인해주세요.');
