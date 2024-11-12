@@ -1,7 +1,7 @@
 // CommentBox.js
 
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Alert, TouchableOpacity, Linking } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { SvgXml } from 'react-native-svg';
 
@@ -20,6 +20,7 @@ import DeleteSvg from '../assets/images/delete.svg';
 import { colors } from '../constants/colors';
 import { fontPercentage } from '../utils/ResponsiveSize';
 import { WithLocalSvg } from 'react-native-svg/css';
+import Autolink from 'react-native-autolink';
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
@@ -27,12 +28,12 @@ const windowHeight = Dimensions.get('window').height;
 const widthPercentage = (percentage) => (windowWidth * percentage) / 100;
 const heightPercentage = (percentage) => (windowHeight * percentage) / 100;
 
-export default function CommentBox({ secondCommentAdd, reloadFunction, profileIcon = 10, onReplyModeChange, pressLike, board_id, post_id, comment_id, name, created_at, content, anon_status, like_size, writer_id, display, showBlock, UserClick, secondCmtUserClick}) {
+export default function CommentBox({ secondCommentAdd, reloadFunction, profileIcon = 10, onReplyModeChange, pressLike, board_id, post_id, comment_id, name, created_at, content, anon_status, like_size, writer_id, display, showBlock, UserClick, secondCmtUserClick }) {
   // console.log("댓글 루트");
   // console.log(route);
   // const {  } = route.params;
   const navigation = useNavigation();
-//  const [liked, setLiked] = useState(false);
+  //  const [liked, setLiked] = useState(false);
 
   const [secondComments, setSecondComments] = useState([]); // 새로운 상태 추가
   const prevSecondCommentRef = useRef('');
@@ -78,7 +79,7 @@ export default function CommentBox({ secondCommentAdd, reloadFunction, profileIc
         if (userData) {
           const { user_id } = JSON.parse(userData);
           let writer = writer_id === user_id;
-          if(writer == false) {
+          if (writer == false) {
             writer = user_id === '7e81bee9-40f3-41aa-a9e4-dc7d7296965b';
           }
           setIsDeleteMode(writer);
@@ -118,7 +119,7 @@ export default function CommentBox({ secondCommentAdd, reloadFunction, profileIc
 
   //일반 삭제
   const handleDeleteConfirmation = () => {
-    if(display == true) {
+    if (display == true) {
       Alert.alert(
         '해당 댓글을 삭제하시겠습니까?',
         '',
@@ -138,7 +139,7 @@ export default function CommentBox({ secondCommentAdd, reloadFunction, profileIc
     } else {
       deleteCommentClick(comment_id);
     }
-    
+
   };
 
   //일반 삭제
@@ -308,7 +309,7 @@ export default function CommentBox({ secondCommentAdd, reloadFunction, profileIc
   //영구 삭제
   const handleCommentConfirmation = async (id) => {
     try {
-      console.log("아이디!!!"+id);
+      console.log("아이디!!!" + id);
       const accessToken = await AsyncStorage.getItem('accessToken');
       const response = await axios.delete(`http://3.34.54.187:8000/administrators/delete/`, {
         data: {
@@ -328,6 +329,13 @@ export default function CommentBox({ secondCommentAdd, reloadFunction, profileIc
       console.error('DELETE 요청 실패:', error);
       // 여기에서 오류 발생 시 처리를 수행하세요.
     }
+  };
+
+
+  //외부 창으로 링크 접속 함수
+  const handleLinkPress = (url) => {
+    // 외부 웹 브라우저로 URL 열기
+    Linking.openURL(url).catch(err => console.error("Failed to open URL:", err));
   };
 
 
@@ -397,7 +405,11 @@ export default function CommentBox({ secondCommentAdd, reloadFunction, profileIc
                     <Text style={styles.date}>{formattedTime}</Text>
                   </View>
                   <View style={styles.contentBox}>
-                    <Text style={styles.content}>{content}</Text>
+                    <Autolink
+                      text={content}
+                      onPress={handleLinkPress}  // 링크 클릭 시 외부 브라우저로 열기
+                      style={styles.content} // 기존 Text 스타일을 Autolink에 전달
+                    />
                   </View>
                   <View style={{ ...styles.footer, justifyContent: "space-between" }}>
                     <View style={{ flexDirection: "row" }}>

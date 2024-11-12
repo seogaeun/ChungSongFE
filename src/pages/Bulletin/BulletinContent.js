@@ -1,6 +1,6 @@
 //BulleinContent.js
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Keyboard, Text, ScrollView, Dimensions, Image, Alert, KeyboardAvoidingView } from "react-native";
+import { View, StyleSheet, Keyboard, Text, ScrollView, Dimensions, Image, Alert, KeyboardAvoidingView, Linking } from "react-native";
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { baseURL } from '../../../baseURL';
@@ -21,6 +21,7 @@ import SquareImage from '../../components/SquareImage';
 import UserIcon from '../../components/UserIcon';
 import { fontPercentage } from '../../utils/ResponsiveSize';
 import { WithLocalSvg } from 'react-native-svg/css';
+import Autolink from 'react-native-autolink';
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
@@ -550,8 +551,10 @@ export default function BulletinContent({ route, navigation }) {
         },
         {
           text: "확인", // 확인 버튼
-          onPress: () => {        navigation.goBack();
-             Alert.alert("차단하기가 완료되었습니다. \n 해당글 이후에 작성자가 작성한 글들은 보이지 않게 됩니다.");}, // 확인을 누르면 회원가입 페이지로 이동
+          onPress: () => {
+            navigation.goBack();
+            Alert.alert("차단하기가 완료되었습니다. \n 해당글 이후에 작성자가 작성한 글들은 보이지 않게 됩니다.");
+          }, // 확인을 누르면 회원가입 페이지로 이동
         },
       ]
     );
@@ -668,7 +671,10 @@ export default function BulletinContent({ route, navigation }) {
     }
   };
 
-
+  const handleLinkPress = (url) => {
+    // 외부 웹 브라우저로 URL 열기
+    Linking.openURL(url).catch(err => console.error("Failed to open URL:", err));
+  };
 
   return (
     <View style={styles.container}>
@@ -768,9 +774,11 @@ export default function BulletinContent({ route, navigation }) {
             </View>
 
             <View style={styles.content}>
-              <Text style={styles.contentText}>
-                {contentInfo.content}
-              </Text>
+              <Autolink
+                text={contentInfo.content}
+                onPress={handleLinkPress}  // 링크 클릭 시 외부 브라우저로 열기
+                style={styles.contentText} // 기존 Text 스타일을 Autolink에 전달
+              />
             </View>
 
             {contentInfo.images && contentInfo.images.length > 0 && (
