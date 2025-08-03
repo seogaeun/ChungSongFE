@@ -1,4 +1,4 @@
-=[=-=![iphone 6 5형_1](https://github.com/user-attachments/assets/e473df13-ded7-4335-b337-d21a9531b777)
+![iphone 6 5형_1](https://github.com/user-attachments/assets/e473df13-ded7-4335-b337-d21a9531b777)
 ![iphone 6 5형_2](https://github.com/user-attachments/assets/168ee821-84c1-4492-bfaf-935381a2c21d)
 ![iphone 6 5형_3](https://github.com/user-attachments/assets/19437965-9ccb-4957-95f0-fab087b27a94)
 ![iphone 6 5형_4](https://github.com/user-attachments/assets/7ae96843-195e-48aa-b33c-cc2004ec17f5)
